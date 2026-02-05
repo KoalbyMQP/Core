@@ -157,18 +157,50 @@ spec:
                             script: "grep '^version' ${ROS_WS}/src/${PACKAGE_DIR}/pyproject.toml | cut -d'\"' -f2",
                             returnStdout: true
                         ).trim()
-                        echo "Publishing release v${version}"
+                        
+                        def commitHash = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                        def releaseTag = "v${version}"
+                        
+                        def releaseBody = """
+        ## Python Example Release ${releaseTag}
 
-                        if (env.TAG_NAME) {
-                            def version = env.TAG_NAME.replace('v', '')
-                            echo "Publishing release ${version}"
-                        } else {
-                            echo "Skipping - no tag"
-                        }
+        Build from commit ${commitHash}
+
+        ### Artifacts
+        - Python wheel (.whl)
+        - Source distribution (.tar.gz)
+        - Colcon install tarball
+        """.trim()
+                        
+                        writeFile file: 'release_body.md', text: releaseBody
+                        
+                        createGitHubRelease(
+                            credentialId: 'github_personal_token',
+                            repository: 'YourOrg/YourRepo',
+                            tag: releaseTag,
+                            name: "Python Example ${releaseTag}",
+                            bodyFile: 'release_body.md',
+                            prerelease: false,
+                            draft: false,
+                            commitish: commitHash
+                        )
+                        
+                        uploadGithubReleaseAsset(
+                            credentialId: 'github_personal_token',
+                            repository: 'YourOrg/YourRepo',
+                            tagName: releaseTag,
+                            commitish: commitHash,
+                            uploadAssets: [
+                                [filePath: 'artifacts/*.whl'],
+                                [filePath: 'artifacts/*.tar.gz']
+                            ]
+                        )
+                        
+                        echo "Release ${releaseTag} published"
                     }
                 }
             }
-        }
+        }    
     }
     
     post {
