@@ -41,7 +41,7 @@ spec:
                         apt-get install -y python3-pip python3-build python3-venv
                         pip3 install uv
                         mkdir -p ${ROS_WS}/src
-                        cp -r pkgs/python_example ${ROS_WS}/src/
+                        cp -r pkgs/python-example ${ROS_WS}/src/
                     '''
                 }
             }
