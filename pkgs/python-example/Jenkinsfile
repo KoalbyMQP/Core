@@ -177,7 +177,7 @@ spec:
                         
                         createGitHubRelease(
                             credentialId: 'github_personal_token',
-                            repository: 'YourOrg/YourRepo',
+                            repository: 'KoalbyMQP/Core',
                             tag: releaseTag,
                             name: "Python Example ${releaseTag}",
                             bodyFile: 'release_body.md',
@@ -188,7 +188,7 @@ spec:
                         
                         uploadGithubReleaseAsset(
                             credentialId: 'github_personal_token',
-                            repository: 'YourOrg/YourRepo',
+                            repository: 'KoalbyMQP/Core',
                             tagName: releaseTag,
                             commitish: commitHash,
                             uploadAssets: [
