@@ -191,8 +191,8 @@ spec:
                             repository: 'KoalbyMQP/Core',
                             tagName: releaseTag,
                             uploadAssets: [
-                                [filePath: 'artifacts/*.whl'],
-                                [filePath: 'artifacts/*.tar.gz']
+                                [filePath: "artifacts/python_example-${version}-py3-none-any.whl"],
+                                [filePath: "artifacts/python_example-${version}.tar.gz"]
                             ]
                         )
                         
