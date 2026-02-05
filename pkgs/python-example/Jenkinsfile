@@ -153,8 +153,18 @@ spec:
             steps {
                 container('ros') {
                     script {
-                        def version = env.TAG_NAME.replace('v', '')
-                        echo "Publishing release ${version}"
+                        def version = sh(
+                            script: "grep '^version' ${ROS_WS}/src/${PACKAGE_DIR}/pyproject.toml | cut -d'\"' -f2",
+                            returnStdout: true
+                        ).trim()
+                        echo "Publishing release v${version}"
+
+                        if (env.TAG_NAME) {
+                            def version = env.TAG_NAME.replace('v', '')
+                            echo "Publishing release ${version}"
+                        } else {
+                            echo "Skipping - no tag"
+                        }
                     }
                 }
             }
