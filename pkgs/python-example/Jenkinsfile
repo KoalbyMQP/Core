@@ -41,7 +41,7 @@ spec:
                         apt-get install -y python3-pip python3-build python3-venv
                         pip3 install uv
                         mkdir -p ${ROS_WS}/src
-                        cp -r pkgs/python-example ${ROS_WS}/src/
+                        cp -r pkgs/python_example ${ROS_WS}/src/
                     '''
                 }
             }
@@ -92,7 +92,7 @@ spec:
             steps {
                 container('ros') {
                     sh '''
-                        cd ${ROS_WS}/src/python-example
+                        cd ${ROS_WS}/src/python_example
                         python3 -m build
                         mkdir -p ${WORKSPACE}/artifacts
                         cp dist/*.whl ${WORKSPACE}/artifacts/
@@ -109,7 +109,7 @@ spec:
             steps {
                 container('ros') {
                     sh '''
-                        cd ${ROS_WS}/src/python-example
+                        cd ${ROS_WS}/src/python_example
                         uv venv
                         . .venv/bin/activate
                         uv pip install build
@@ -128,7 +128,7 @@ spec:
                     sh '''
                         cd ${ROS_WS}
                         mkdir -p ${WORKSPACE}/artifacts
-                        tar czf ${WORKSPACE}/artifacts/python-example-${TAG_NAME}.tar.gz install/${PACKAGE_NAME}/
+                        tar czf ${WORKSPACE}/artifacts/python_example-${TAG_NAME}.tar.gz install/${PACKAGE_NAME}/
                     '''
                 }
             }
