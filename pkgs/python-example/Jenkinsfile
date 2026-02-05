@@ -190,7 +190,6 @@ spec:
                             credentialId: 'github_personal_token',
                             repository: 'KoalbyMQP/Core',
                             tagName: releaseTag,
-                            commitish: commitHash,
                             uploadAssets: [
                                 [filePath: 'artifacts/*.whl'],
                                 [filePath: 'artifacts/*.tar.gz']
