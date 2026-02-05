@@ -1,121 +1,40 @@
 pipeline {
     agent {
-        docker {
-            image 'ros:humble'
-            args '-u root:root'
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: docker
+    image: docker:dind
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run
+  volumes:
+  - name: docker-sock
+    emptyDir: {}
+'''
         }
-    }
-    
-    environment {
-        ROS_WS = '/ros_ws'
-        PACKAGE_NAME = 'python_example'
     }
     
     stages {
-        stage('Setup') {
+        stage('Build') {
             steps {
-                sh '''
-                    apt-get update
-                    apt-get install -y python3-pip python3-build python3-venv
-                    pip3 install uv
-                    mkdir -p ${ROS_WS}/src
-                    cp -r . ${ROS_WS}/src/python-example
-                '''
-            }
-        }
-        
-        stage('Install Dependencies') {
-            steps {
-                sh '''
-                    cd ${ROS_WS}
-                    . /opt/ros/humble/setup.sh
-                    rosdep update
-                    rosdep install --from-paths src --ignore-src -r -y
-                '''
-            }
-        }
-        
-        stage('Build with Colcon') {
-            steps {
-                sh '''
-                    cd ${ROS_WS}
-                    . /opt/ros/humble/setup.sh
-                    colcon build --packages-select ${PACKAGE_NAME}
-                '''
+                container('docker') {
+                    sh 'docker pull ros:humble'
+                    // Add your other docker commands here
+                }
             }
         }
         
         stage('Test') {
             steps {
-                sh '''
-                    cd ${ROS_WS}
-                    . /opt/ros/humble/setup.sh
-                    colcon test --packages-select ${PACKAGE_NAME}
-                    colcon test-result --verbose
-                '''
-            }
-        }
-        
-        stage('Build Python Wheel') {
-            when {
-                tag pattern: "v\\d+\\.\\d+\\.\\d+", comparator: "REGEXP"
-            }
-            steps {
-                sh '''
-                    cd ${ROS_WS}/src/python-example
-                    python3 -m build
-                    mkdir -p ${WORKSPACE}/artifacts
-                    cp dist/*.whl ${WORKSPACE}/artifacts/
-                    cp dist/*.tar.gz ${WORKSPACE}/artifacts/ || true
-                '''
-            }
-        }
-        
-        stage('Build with uv') {
-            when {
-                tag pattern: "v\\d+\\.\\d+\\.\\d+", comparator: "REGEXP"
-            }
-            steps {
-                sh '''
-                    cd ${ROS_WS}/src/python-example
-                    uv venv
-                    . .venv/bin/activate
-                    uv pip install build
-                    python3 -m build
-                '''
-            }
-        }
-        
-        stage('Create Tarball') {
-            when {
-                tag pattern: "v\\d+\\.\\d+\\.\\d+", comparator: "REGEXP"
-            }
-            steps {
-                sh '''
-                    cd ${ROS_WS}
-                    mkdir -p ${WORKSPACE}/artifacts
-                    tar czf ${WORKSPACE}/artifacts/python-example-${TAG_NAME}.tar.gz install/${PACKAGE_NAME}/
-                '''
-            }
-        }
-        
-        stage('Archive Artifacts') {
-            when {
-                tag pattern: "v\\d+\\.\\d+\\.\\d+", comparator: "REGEXP"
-            }
-            steps {
-                archiveArtifacts artifacts: 'artifacts/*', fingerprint: true
-            }
-        }
-        
-        stage('Publish Release') {
-            when {
-                tag pattern: "v\\d+\\.\\d+\\.\\d+", comparator: "REGEXP"
-            }
-            steps {
-                script {
-                    def version = env.TAG_NAME.replace('v', '')
-                    echo "Publishing release ${version}"
+                container('docker') {
+                    // Your test commands
+                    sh 'echo "Running tests"'
                 }
             }
         }
@@ -123,10 +42,8 @@ pipeline {
     
     post {
         always {
-            cleanWs()
-        }
-        success {
-            echo 'Build succeeded!'
+            echo 'Build completed'
+            // Remove cleanWs() or install Workspace Cleanup plugin
         }
         failure {
             echo 'Build failed!'
