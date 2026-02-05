@@ -30,6 +30,7 @@ spec:
     environment {
         ROS_WS = '/ros_ws'
         PACKAGE_NAME = 'python_example'
+        PACKAGE_DIR = 'python-example'
     }
     
     stages {
@@ -41,7 +42,7 @@ spec:
                         apt-get install -y python3-pip python3-build python3-venv
                         pip3 install uv
                         mkdir -p ${ROS_WS}/src
-                        cp -r pkgs/python-example ${ROS_WS}/src/
+                        cp -r pkgs/${PACKAGE_DIR} ${ROS_WS}/src/
                     '''
                 }
             }
@@ -92,7 +93,7 @@ spec:
             steps {
                 container('ros') {
                     sh '''
-                        cd ${ROS_WS}/src/python_example
+                        cd ${ROS_WS}/src/${PACKAGE_DIR}
                         python3 -m build
                         mkdir -p ${WORKSPACE}/artifacts
                         cp dist/*.whl ${WORKSPACE}/artifacts/
@@ -109,7 +110,7 @@ spec:
             steps {
                 container('ros') {
                     sh '''
-                        cd ${ROS_WS}/src/python_example
+                        cd ${ROS_WS}/src/${PACKAGE_DIR}
                         uv venv
                         . .venv/bin/activate
                         uv pip install build
@@ -128,7 +129,7 @@ spec:
                     sh '''
                         cd ${ROS_WS}
                         mkdir -p ${WORKSPACE}/artifacts
-                        tar czf ${WORKSPACE}/artifacts/python_example-${TAG_NAME}.tar.gz install/${PACKAGE_NAME}/
+                        tar czf ${WORKSPACE}/artifacts/${PACKAGE_NAME}-${TAG_NAME}.tar.gz install/${PACKAGE_NAME}/
                     '''
                 }
             }
@@ -162,7 +163,6 @@ spec:
     
     post {
         always {
-            // cleanWs() - Install Workspace Cleanup plugin or remove this
             echo 'Pipeline completed'
         }
         success {
