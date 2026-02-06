@@ -1,4 +1,5 @@
 // Copyright 2026 <Jacob Molnia/anomalymotion>
+// SPDX-License-Identifier: MIT
 
 #include <chrono>
 #include <memory>
