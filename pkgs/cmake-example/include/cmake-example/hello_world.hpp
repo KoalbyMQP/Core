@@ -1,3 +1,5 @@
+// Copyright 2026 <Jacob Molnia/anomalymotion>
+
 #ifndef CMAKE_EXAMPLE__HELLO_WORLD_HPP_
 #define CMAKE_EXAMPLE__HELLO_WORLD_HPP_
 

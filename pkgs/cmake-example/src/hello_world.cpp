@@ -1,3 +1,5 @@
+// Copyright 2026 <Jacob Molnia/anomalymotion>
+
 #include <chrono>
 #include <memory>
 #include "rclcpp/rclcpp.hpp"
@@ -28,7 +30,7 @@ private:
   void timer_callback()
   {
     HelloWorld hw;
-    RCLCPP_INFO(this->get_logger(), "%s", hw.get_message().c_str());
+    RCLCPP_INFO(this->get_logger(), "%s", hw.get_message().c_str()); 
   }
   
   rclcpp::TimerBase::SharedPtr timer_;
