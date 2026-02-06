@@ -1,4 +1,5 @@
 // Copyright 2026 <Jacob Molnia/anomalymotion>
+// SPDX-License-Identifier: MIT
 
 #ifndef CMAKE_EXAMPLE__HELLO_WORLD_HPP_
 #define CMAKE_EXAMPLE__HELLO_WORLD_HPP_
