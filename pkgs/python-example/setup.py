@@ -1,3 +1,5 @@
+# Copyright 2026 <Jacob Molnia/anomalymotion>
+
 from setuptools import setup
 
 package_name = 'python_example'

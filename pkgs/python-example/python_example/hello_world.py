@@ -1,3 +1,5 @@
+# Copyright 2026 <Jacob Molnia/anomalymotion>
+
 import rclpy
 from rclpy.node import Node
 
