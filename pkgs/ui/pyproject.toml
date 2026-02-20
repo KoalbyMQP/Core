@@ -1,0 +1,11 @@
+[project]
+name = "face-ui"
+version = "0.0.0a"
+description = ""
+authors = [{ name = "Jacob Molnia", email = "jrmolnia@wpi.edu" }]
+requires-python = ">=3.10,<4.0"
+readme = "README.md"
+license = "MIT"
+dependencies = [
+    "pygame>=2.6.1",
+]
