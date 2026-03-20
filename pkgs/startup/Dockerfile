@@ -1,23 +1,43 @@
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim-bookworm AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libsdl2-2.0-0 \
-    libsdl2-ttf-2.0-0 \
-    libsdl2-image-2.0-0 \
-    libgl1 \
-    libgbm1 \
-    libdrm2 \
-    fonts-dejavu-core \
+    wget build-essential autoconf automake libtool \
+    linux-libc-dev fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
-ENV SDL_VIDEODRIVER=kmsdrm
-ENV SDL_AUDIODRIVER=dummy
-ENV DISPLAY=
+RUN wget https://github.com/libsdl-org/SDL/releases/download/release-2.28.4/SDL2-2.28.4.tar.gz && \
+    tar xf SDL2-2.28.4.tar.gz && \
+    cd SDL2-2.28.4 && \
+    ./configure \
+        --host=$(gcc -dumpmachine) \
+        --enable-video-fbdev \
+        --disable-video-opengl \
+        --disable-video-wayland \
+        --disable-video-x11 \
+        --disable-pulseaudio \
+        --disable-esd \
+        --disable-video-kmsdrm
+    grep "SDL_VIDEO_DRIVER_FBDEV 1" include/SDL_config.h || (echo "FBDEV NOT IN CONFIG" && exit 1) && \
+    make -j2 && make install && \
+    grep -a fbdev /usr/local/lib/libSDL2-2.0.so.0 || (echo "FBDEV NOT COMPILED IN" && exit 1) && \
+    cd .. && rm -rf SDL2-2.28.4*
 
-WORKDIR /app
 COPY pyproject.toml .
-RUN pip install --no-cache-dir pygame==2.6.1
+RUN pip install --no-cache-dir --target /app/deps pygame==2.6.1 && \
+    ln -sf /usr/local/lib/libSDL2-2.0.so.0 \
+    $(find /app/deps -name "libSDL2-2-*.so*" | head -1)
 
-COPY src/ ./src/
 
-CMD ["python3", "src/main.py"]
+FROM python:3.12-slim-bookworm
+
+COPY --from=builder /usr/local/lib/libSDL2-2.0.so.0* /usr/local/lib/
+COPY --from=builder /app/deps /app/deps
+COPY --from=builder /usr/share/fonts /usr/share/fonts
+
+ENV SDL_VIDEODRIVER=fbdev
+ENV SDL_FBDEV=/dev/fb0
+ENV SDL_AUDIODRIVER=dummy
+ENV PYTHONPATH=/app/deps
+
+COPY src/ /app/src/
+CMD ["python3", "/app/src/main.py"]
