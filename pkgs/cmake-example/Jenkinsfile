@@ -1,0 +1,202 @@
+// Copyright 2026 <Jacob Molnia/anomalymotion>
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: docker
+    image: docker:dind
+    securityContext:
+      privileged: true
+    volumeMounts:
+    - name: docker-sock
+      mountPath: /var/run
+  - name: ros
+    image: ros:humble
+    command:
+    - cat
+    tty: true
+    securityContext:
+      runAsUser: 0
+  volumes:
+  - name: docker-sock
+    emptyDir: {}
+'''
+        }
+    }
+
+    environment {
+        ROS_WS = '/ros_ws'
+        PACKAGE_NAME = 'cmake_example'
+        PACKAGE_DIR = 'cmake-example'
+        DOCKER_HUB_USER = 'koalbymqp'
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                container('ros') {
+                    sh '''
+                        apt-get update
+                        apt-get install -y build-essential cmake
+                        mkdir -p ${ROS_WS}/src
+                        cp -r pkgs/${PACKAGE_DIR} ${ROS_WS}/src/
+                    '''
+                }
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                container('ros') {
+                    sh '''
+                        cd ${ROS_WS}
+                        . /opt/ros/humble/setup.sh
+                        rosdep update
+                        rosdep install --from-paths src --ignore-src -r -y
+                    '''
+                }
+            }
+        }
+
+        stage('Build with Colcon') {
+            steps {
+                container('ros') {
+                    sh '''
+                        cd ${ROS_WS}
+                        . /opt/ros/humble/setup.sh
+                        colcon build --packages-select ${PACKAGE_NAME}
+                    '''
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                container('ros') {
+                    sh '''
+                        cd ${ROS_WS}
+                        . /opt/ros/humble/setup.sh
+                        colcon test --packages-select ${PACKAGE_NAME}
+                        colcon test-result --verbose
+                    '''
+                }
+            }
+        }
+
+        stage('Create Tarball') {
+            when {
+                tag pattern: "v\\d+\\.\\d+\\.\\d+", comparator: "REGEXP"
+            }
+            steps {
+                container('ros') {
+                    sh '''
+                        cd ${ROS_WS}
+                        mkdir -p ${WORKSPACE}/artifacts
+                        tar czf ${WORKSPACE}/artifacts/${PACKAGE_NAME}-${TAG_NAME}.tar.gz install/${PACKAGE_NAME}/
+                    '''
+                }
+            }
+        }
+
+        stage('Archive Artifacts') {
+            when {
+                tag pattern: "v\\d+\\.\\d+\\.\\d+", comparator: "REGEXP"
+            }
+            steps {
+                container('ros') {
+                    archiveArtifacts artifacts: 'artifacts/*', fingerprint: true
+                }
+            }
+        }
+
+        stage('Publish Release') {
+            when {
+                tag pattern: "v\\d+\\.\\d+\\.\\d+", comparator: "REGEXP"
+            }
+            steps {
+                container('ros') {
+                    script {
+                        sh 'git config --global --add safe.directory "*"'
+                        def version = sh(
+                            script: "grep '<version>' ${ROS_WS}/src/${PACKAGE_DIR}/package.xml | sed 's/.*<version>\\(.*\\)<\\/version>.*/\\1/'",
+                            returnStdout: true
+                        ).trim()
+
+                        def commitHash = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                        def releaseTag = "v${version}"
+
+                        def releaseBody = """
+## CMake Example ${releaseTag}
+
+Build from commit ${commitHash}
+
+### Artifacts
+- Colcon install tarball
+""".trim()
+
+                        writeFile file: 'release_body.md', text: releaseBody
+
+                        createGitHubRelease(
+                            credentialId: 'github_personal_token',
+                            repository: 'KoalbyMQP/Core',
+                            tag: releaseTag,
+                            name: "CMake Example ${releaseTag}",
+                            bodyFile: 'release_body.md',
+                            prerelease: false,
+                            draft: false,
+                            commitish: commitHash
+                        )
+
+                        uploadGithubReleaseAsset(
+                            credentialId: 'github_personal_token',
+                            repository: 'KoalbyMQP/Core',
+                            tagName: releaseTag,
+                            uploadAssets: [
+                                [filePath: "artifacts/${PACKAGE_NAME}-${releaseTag}.tar.gz"]
+                            ]
+                        )
+
+                        echo "Release ${releaseTag} published"
+                    }
+                }
+            }
+        }
+
+        stage('Build and Push Docker Image') {
+            when {
+                tag pattern: "v\\d+\\.\\d+\\.\\d+", comparator: "REGEXP"
+            }
+            steps {
+                container('docker') {
+                    script {
+                        docker.withRegistry('', 'dockerhub-credentials') {
+                            def img = docker.build(
+                                "${DOCKER_HUB_USER}/${PACKAGE_DIR}:${TAG_NAME}",
+                                "-f pkgs/${PACKAGE_DIR}/Dockerfile ."
+                            )
+                            img.push()
+                            img.push('latest')
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline completed'
+        }
+        success {
+            echo 'Build succeeded!'
+        }
+        failure {
+            echo 'Build failed!'
+        }
+    }
+}
