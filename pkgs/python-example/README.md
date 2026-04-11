@@ -1,6 +1,6 @@
 # python-example
 
-Example ROS2 Python package with a simple hello world node.
+Example ROS 2 Python package with a simple hello world node.
 
 ## Structure
 
@@ -11,40 +11,36 @@ Example ROS2 Python package with a simple hello world node.
 - `python_example/` - Python module (note underscore, not hyphen)
 - `resources/` - Resource marker file
 
-## Build with colcon
+## Developer workflow
 
-```bash
-colcon build --packages-select python_example
-```
+Standard steps are documented in the [MQP dev guide](https://github.com/KoalbyMQP/ZaraOS/wiki).
 
-## Run
+Quick reference using `just` from this directory:
 
-```bash
-source install/setup.bash
-ros2 run python_example hello_world_node
-```
+| Command | What it does |
+|---|---|
+| `just build` | Builds a local container image tagged `python-example:dev` |
+| `just run` | Starts the image on the local Cortex server, saves the instance ID |
+| `just logs` | Streams live logs from the running instance |
+| `just stop` | Stops the running instance |
+| `just deploy` | Runs the latest registry image (no local build) |
 
-## Using uv for Development
+## CI / releases
 
-We use [uv](https://github.com/astral-sh/uv) for fast Python package management.
+The Jenkinsfile runs on every push. On a version tag (`vX.Y.Z`) it additionally:
 
-### Install uv
+1. Builds a Python wheel and source distribution, archives them as Jenkins artifacts.
+2. Creates a colcon install tarball.
+3. Creates a GitHub release in `KoalbyMQP/Core` titled **Python Example vX.Y.Z** and attaches the wheel and tarball.
+4. Builds and pushes `koalbymqp/python-example:<tag>` to Docker Hub.
 
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+> The release title format `Python Example <tag>` is required — the Cortex registry parser uses it to match releases to the correct app.
 
-### Create virtual environment and install package
+## Using uv for local development
 
 ```bash
 cd python-example
 uv venv
-source .venv/bin/activate
-uv pip install -e .
-```
-
-### Install with dev dependencies
-
-```bash
 uv pip install -e ".[dev]"
+uv run ...
 ```

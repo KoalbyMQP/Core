@@ -1,0 +1,21 @@
+package_name := "python-example"
+
+# Build a local dev image with nerdctl.
+build:
+    nerdctl build -t {{package_name}}:dev .
+
+# Start a new instance using the local dev image.
+run:
+    cortex run --image {{package_name}}:dev
+
+# Stream live logs for the running instance.
+logs:
+    cortex logs --follow
+
+# Stop the running instance.
+stop:
+    cortex stop
+
+# Deploy via registry (no local image override).
+deploy:
+    cortex run
