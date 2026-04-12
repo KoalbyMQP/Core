@@ -5,7 +5,7 @@ name: Release Startup
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "startup/v[0-9]+.[0-9]+.[0-9]+*"
 
 env:
   PACKAGE_NAME: face_ui
@@ -67,6 +67,14 @@ jobs:
       - name: Install build tools
         run: pip install build uv
 
+      # Strip "startup/" prefix from tag → e.g. "startup/v0.0.1-alpha" → "v0.0.1-alpha"
+      - name: Extract tag
+        id: tag
+        run: |
+          TAG="${GITHUB_REF_NAME#startup/}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Release tag: ${TAG}"
+
       # Stage 5 — Build Python Wheel
       - name: Build Python Wheel
         run: |
@@ -89,7 +97,7 @@ jobs:
       - name: Create Tarball
         run: |
           mkdir -p ${{ github.workspace }}/artifacts
-          tar czf ${{ github.workspace }}/artifacts/${{ env.PACKAGE_NAME }}-${{ github.ref_name }}.tar.gz \
+          tar czf ${{ github.workspace }}/artifacts/${{ env.PACKAGE_NAME }}-${{ steps.tag.outputs.tag }}.tar.gz \
             -C pkgs ${{ env.PACKAGE_DIR }}/
 
       # Stage 8 — Archive Artifacts
@@ -111,9 +119,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: "Startup ${{ github.ref_name }}"
+          name: "Startup ${{ steps.tag.outputs.tag }}"
           body: |
-            ## Startup ${{ github.ref_name }}
+            ## Startup ${{ steps.tag.outputs.tag }}
 
             Build from commit ${{ github.sha }}
 
@@ -124,7 +132,7 @@ jobs:
           files: |
             artifacts/${{ env.PACKAGE_NAME }}-${{ steps.version.outputs.version }}-py3-none-any.whl
             artifacts/${{ env.PACKAGE_NAME }}-${{ steps.version.outputs.version }}.tar.gz
-            artifacts/${{ env.PACKAGE_NAME }}-${{ github.ref_name }}.tar.gz
+            artifacts/${{ env.PACKAGE_NAME }}-${{ steps.tag.outputs.tag }}.tar.gz
 
   # ── Job 3: Docker image → GHCR (maps to Jenkins stage 10) ─────────────
   docker:
@@ -137,6 +145,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # Strip "startup/" prefix from tag
+      - name: Extract tag
+        id: tag
+        run: |
+          TAG="${GITHUB_REF_NAME#startup/}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
 
@@ -153,7 +168,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}}
+            type=raw,value=${{ steps.tag.outputs.tag }}
             type=raw,value=latest
 
       - name: Build & push
