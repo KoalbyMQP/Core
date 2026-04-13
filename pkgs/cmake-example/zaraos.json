@@ -1,0 +1,11 @@
+{
+  "name": "cmake-example",
+  "image": "koalby/cmake-example",
+  "essential": false,
+  "autostart": false,
+  "depends": [],
+  "env": {
+    "ROS_DOMAIN_ID": "42",
+    "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp"
+  }
+}

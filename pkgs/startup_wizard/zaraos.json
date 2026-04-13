@@ -1,0 +1,19 @@
+{
+  "name": "startup-wizard",
+  "image": "koalby/startup-wizard",
+  "essential": true,
+  "autostart": true,
+  "depends": ["cortex-bridge"],
+  "env": {
+    "SDL_VIDEODRIVER": "kmsdrm",
+    "SDL_AUDIODRIVER": "dummy",
+    "ROS_DOMAIN_ID": "42",
+    "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp"
+  },
+  "health_check": {
+    "enabled": true,
+    "restart_on_failure": true,
+    "max_restarts": 3
+  },
+  "run_condition": "!file_exists:/data/.setup-done"
+}
