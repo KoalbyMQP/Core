@@ -1,0 +1,6 @@
+# Request a WiFi network scan
+---
+string[] ssids
+int32[] signal_strengths
+bool success
+string error

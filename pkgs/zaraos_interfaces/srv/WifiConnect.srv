@@ -1,0 +1,6 @@
+# Connect to a WiFi network
+string ssid
+string password
+---
+bool success
+string message
