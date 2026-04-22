@@ -53,9 +53,8 @@ def main():
     # Instance tracking
     instances: dict = {}  # instance_id -> {app, state, error}
 
-    init_fonts()
-
     pygame.init()
+    init_fonts()
     screen = pygame.display.set_mode((W, H))
     pygame.display.set_caption("Face UI")
     clock = pygame.time.Clock()

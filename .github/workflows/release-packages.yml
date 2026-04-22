@@ -1,0 +1,138 @@
+name: Release Package Images
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish"
+        required: true
+
+env:
+  REGISTRY: ghcr.io
+  PLATFORMS: linux/amd64,linux/arm64
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.packages.outputs.matrix }}
+      tag: ${{ steps.tag.outputs.value }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Discover package matrix
+        id: packages
+        run: |
+          MATRIX="$(python3 scripts/ci/discover_packages.py)"
+          echo "matrix=${MATRIX}" >> "$GITHUB_OUTPUT"
+          echo "Discovered packages: ${MATRIX}"
+
+  build:
+    needs: discover
+    if: ${{ needs.discover.outputs.packages != '[]' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.discover.outputs.packages) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.package.image_name }}
+          tags: |
+            type=raw,value=${{ needs.discover.outputs.tag }}
+            type=raw,value=latest
+
+      - name: Build and push ${{ matrix.package.package_dir }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.package.dockerfile }}
+          platforms: ${{ env.PLATFORMS }}
+          push: true
+          build-args: |
+            PACKAGE_NAME=${{ matrix.package.package_name }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.package.image_name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.package.image_name }}
+
+      - name: Write release note fragment
+        run: |
+          mkdir -p release-notes
+          cat <<EOF > "release-notes/${{ matrix.package.image_name }}.md"
+          - \`${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.package.image_name }}:${{ needs.discover.outputs.tag }}\` (`linux/amd64`, `linux/arm64`)
+          EOF
+
+      - name: Upload release note fragment
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes-${{ matrix.package.image_name }}
+          path: release-notes/${{ matrix.package.image_name }}.md
+
+  release:
+    needs:
+      - discover
+      - build
+    if: ${{ needs.discover.outputs.packages != '[]' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download release note fragments
+        uses: actions/download-artifact@v4
+        with:
+          path: release-notes
+          pattern: release-notes-*
+          merge-multiple: true
+
+      - name: Assemble release notes
+        run: |
+          {
+            echo "## Container Images"
+            echo
+            find release-notes -type f -name '*.md' | sort | xargs cat
+          } > release-body.md
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.discover.outputs.tag }}
+          name: "Core ${{ needs.discover.outputs.tag }}"
+          body_path: release-body.md
