@@ -8,6 +8,7 @@
   <license>MIT</license>
 
   <depend>rclpy</depend>
+  <depend>rmw_cyclonedds_cpp</depend>
   <depend>zaraos_interfaces</depend>
   <depend>std_msgs</depend>
   <depend>builtin_interfaces</depend>

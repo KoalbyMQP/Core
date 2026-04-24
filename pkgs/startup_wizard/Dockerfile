@@ -8,7 +8,10 @@ WORKDIR /ros_ws
 COPY pkgs /ros_ws/src/
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends python3-pygame && \
+    apt-get install -y --no-install-recommends \
+        python3-pygame \
+        ros-humble-rmw-cyclonedds-cpp \
+        ros-humble-cyclonedds && \
     rm -rf /var/lib/apt/lists/*
 
 RUN /bin/bash -c "source /opt/ros/humble/setup.bash && \
