@@ -1,6 +1,6 @@
 {
   "name": "face-ui",
-  "image": "koalby/face-ui",
+  "image": "ghcr.io/koalbymqp/face-ui",
   "essential": true,
   "autostart": true,
   "depends": ["cortex-bridge"],
@@ -15,5 +15,11 @@
     "restart_on_failure": true,
     "max_restarts": 3
   },
+  "privileged": true,
+  "volumes": [
+    "/dev:/dev",
+    "/sys:/sys:ro",
+    "/run/udev:/run/udev:ro"
+  ],
   "run_condition": "file_exists:/data/.setup-done"
 }

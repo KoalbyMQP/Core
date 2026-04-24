@@ -36,7 +36,7 @@ LERP_SPEED   = 14.0
 
 # Containers to pull after WiFi setup — extend freely
 CONTAINERS_TO_PULL = [
-    "koalby/zaraos-face:latest",
+    "ghcr.io/koalbymqp/face-ui:latest",
 ]
 
 # Setup config paths

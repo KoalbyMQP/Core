@@ -9,6 +9,7 @@ the startup wizard.
 import subprocess
 import time
 import threading
+import traceback
 
 import rclpy
 from rclpy.node import Node
@@ -301,14 +302,23 @@ network={{
 
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = CortexBridgeNode()
+    node = None
     try:
+        rclpy.init(args=args)
+        node = CortexBridgeNode()
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
+    except Exception:
+        print("[cortex_bridge] fatal exception", flush=True)
+        traceback.print_exc()
+        raise
     finally:
-        node.destroy_node()
+        try:
+            if node is not None:
+                node.destroy_node()
+        except Exception:
+            pass
         rclpy.try_shutdown()
 
 

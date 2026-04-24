@@ -1,6 +1,6 @@
 {
   "name": "startup-wizard",
-  "image": "koalby/startup-wizard",
+  "image": "ghcr.io/koalbymqp/startup-wizard",
   "essential": true,
   "autostart": true,
   "depends": ["cortex-bridge"],
@@ -15,5 +15,16 @@
     "restart_on_failure": true,
     "max_restarts": 3
   },
+  "privileged": true,
+  "volumes": [
+    "/dev:/dev",
+    "/sys:/sys:ro",
+    "/data:/data",
+    "/etc/hostname:/etc/hostname",
+    "/etc/wpa_supplicant.conf:/etc/wpa_supplicant.conf",
+    "/var/run/wpa_supplicant:/var/run/wpa_supplicant",
+    "/run/udev:/run/udev:ro",
+    "/run/containerd/containerd.sock:/run/containerd/containerd.sock"
+  ],
   "run_condition": "!file_exists:/data/.setup-done"
 }

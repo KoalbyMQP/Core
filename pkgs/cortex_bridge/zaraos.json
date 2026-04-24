@@ -1,6 +1,6 @@
 {
   "name": "cortex-bridge",
-  "image": "koalby/cortex-bridge",
+  "image": "ghcr.io/koalbymqp/cortex-bridge",
   "essential": true,
   "autostart": true,
   "depends": [],
@@ -12,5 +12,11 @@
     "enabled": true,
     "restart_on_failure": true,
     "max_restarts": 3
-  }
+  },
+  "privileged": true,
+  "volumes": [
+    "/dev:/dev",
+    "/sys:/sys:ro",
+    "/run/udev:/run/udev:ro"
+  ]
 }

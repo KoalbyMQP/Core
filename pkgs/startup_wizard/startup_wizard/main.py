@@ -2,6 +2,7 @@ import pygame
 import sys
 import math
 import threading
+import traceback
 
 # ── ROS2 setup (before any screen import) ────────────────────────────
 _ros_available = False
@@ -88,99 +89,103 @@ def draw_progress_dots(surf, state):
 
 def main():
     global _node
+    try:
+        # Initialize ROS2 if available
+        if _ros_available:
+            try:
+                rclpy.init()
+                _node = StartupWizardNode()
+                # Set node reference in system_ros so service calls work
+                if "system" in sys.modules and hasattr(sys.modules["system"], "set_node"):
+                    sys.modules["system"].set_node(_node)
+                spin_thread = threading.Thread(target=rclpy.spin, args=(_node,), daemon=True)
+                spin_thread.start()
+            except Exception as e:
+                print(f"[startup_wizard] ROS2 init failed, running standalone: {e}", flush=True)
+                _node = None
 
-    # Initialize ROS2 if available
-    if _ros_available:
-        try:
-            rclpy.init()
-            _node = StartupWizardNode()
-            # Set node reference in system_ros so service calls work
-            if "system" in sys.modules and hasattr(sys.modules["system"], "set_node"):
-                sys.modules["system"].set_node(_node)
-            spin_thread = threading.Thread(target=rclpy.spin, args=(_node,), daemon=True)
-            spin_thread.start()
-        except Exception as e:
-            print(f"[startup_wizard] ROS2 init failed, running standalone: {e}")
-            _node = None
+        pygame.init()
+        screen = pygame.display.set_mode((W, H))
+        pygame.display.set_caption("ZaraOS Setup")
+        clock  = pygame.time.Clock()
 
-    pygame.init()
-    screen = pygame.display.set_mode((W, H))
-    pygame.display.set_caption("ZaraOS Setup")
-    clock  = pygame.time.Clock()
+        state   = "welcome"
+        ctx     = {}
+        current = make_screen(state, ctx)
+        t       = 0.0
 
-    state   = "welcome"
-    ctx     = {}
-    current = make_screen(state, ctx)
-    t       = 0.0
+        trans_alpha = 0
+        trans_dir   = 1
+        next_state  = None
+        next_ctx    = None
 
-    trans_alpha = 0
-    trans_dir   = 1
-    next_state  = None
-    next_ctx    = None
+        while True:
+            dt = clock.tick(60) / 1000.0
+            t += dt
+            mx, my = pygame.mouse.get_pos()
+            mouse_down = pygame.mouse.get_pressed()[0]
 
-    while True:
-        dt = clock.tick(60) / 1000.0
-        t += dt
-        mx, my = pygame.mouse.get_pos()
-        mouse_down = pygame.mouse.get_pressed()[0]
+            events = pygame.event.get()
+            for e in events:
+                if e.type == pygame.QUIT:
+                    pygame.quit()
+                    if _node:
+                        _node.destroy_node()
+                        rclpy.try_shutdown()
+                    sys.exit()
+                if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    if _node:
+                        _node.destroy_node()
+                        rclpy.try_shutdown()
+                    sys.exit()
 
-        events = pygame.event.get()
-        for e in events:
-            if e.type == pygame.QUIT:
-                pygame.quit()
-                if _node:
-                    _node.destroy_node()
-                    rclpy.try_shutdown()
-                sys.exit()
-            if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
-                pygame.quit()
-                if _node:
-                    _node.destroy_node()
-                    rclpy.try_shutdown()
-                sys.exit()
-
-        # Transition fade
-        if trans_dir == -1:
-            trans_alpha = min(255, trans_alpha + int(dt * 600))
-            if trans_alpha >= 255 and next_state:
-                state   = next_state
-                ctx     = next_ctx or {}
-                current = make_screen(state, ctx)
-                next_state = None
-                trans_dir  = 1
-        else:
-            trans_alpha = max(0, trans_alpha - int(dt * 400))
-
-        result = None
-        if trans_dir == 1 or trans_alpha < 200:
-            result = current.update(dt, events, (mx, my), mouse_down)
-
-        if result and not next_state:
-            if result == "exit":
-                pygame.quit()
-                if _node:
-                    _node.destroy_node()
-                    rclpy.try_shutdown()
-                sys.exit(0)
-            if isinstance(result, tuple):
-                ns, nc = result
+            # Transition fade
+            if trans_dir == -1:
+                trans_alpha = min(255, trans_alpha + int(dt * 600))
+                if trans_alpha >= 255 and next_state:
+                    state   = next_state
+                    ctx     = next_ctx or {}
+                    current = make_screen(state, ctx)
+                    next_state = None
+                    trans_dir  = 1
             else:
-                ns, nc = result, {}
-            next_state = ns
-            next_ctx   = {**ctx, **nc}
-            trans_dir  = -1
+                trans_alpha = max(0, trans_alpha - int(dt * 400))
 
-        draw_bg(screen, t)
-        current.draw(screen)
-        draw_progress_dots(screen, state)
+            result = None
+            if trans_dir == 1 or trans_alpha < 200:
+                result = current.update(dt, events, (mx, my), mouse_down)
 
-        if trans_alpha > 0:
-            overlay = pygame.Surface((W, H))
-            overlay.fill(BG)
-            overlay.set_alpha(trans_alpha)
-            screen.blit(overlay, (0, 0))
+            if result and not next_state:
+                if result == "exit":
+                    pygame.quit()
+                    if _node:
+                        _node.destroy_node()
+                        rclpy.try_shutdown()
+                    sys.exit(0)
+                if isinstance(result, tuple):
+                    ns, nc = result
+                else:
+                    ns, nc = result, {}
+                next_state = ns
+                next_ctx   = {**ctx, **nc}
+                trans_dir  = -1
 
-        pygame.display.flip()
+            draw_bg(screen, t)
+            current.draw(screen)
+            draw_progress_dots(screen, state)
+
+            if trans_alpha > 0:
+                overlay = pygame.Surface((W, H))
+                overlay.fill(BG)
+                overlay.set_alpha(trans_alpha)
+                screen.blit(overlay, (0, 0))
+
+            pygame.display.flip()
+    except Exception:
+        print("[startup_wizard] fatal exception", flush=True)
+        traceback.print_exc()
+        raise
 
 
 if __name__ == "__main__":
