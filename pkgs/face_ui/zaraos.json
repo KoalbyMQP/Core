@@ -5,7 +5,6 @@
   "autostart": true,
   "depends": ["cortex-bridge"],
   "env": {
-    "SDL_VIDEODRIVER": "kmsdrm",
     "SDL_AUDIODRIVER": "dummy",
     "ROS_DOMAIN_ID": "42",
     "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp"

@@ -1,3 +1,4 @@
+import os
 import pygame
 import sys
 import threading
@@ -32,6 +33,64 @@ def _drain_queue(q):
     return items
 
 
+def init_display():
+    requested = os.environ.get("SDL_VIDEODRIVER", "").strip()
+    attempts = []
+    if requested:
+        attempts.append(("requested", requested, os.environ.get("SDL_KMSDRM_REQUIRE_DRM_MASTER")))
+        if requested == "kmsdrm":
+            attempts.append(("kmsdrm-no-drm-master", "kmsdrm", "0"))
+    else:
+        attempts.append(("auto", None, None))
+    attempts.append(("auto", None, None))
+
+    seen = set()
+    last_err = None
+    dri_nodes = [node for node in ("/dev/dri/card0", "/dev/dri/renderD128") if os.path.exists(node)]
+    print(
+        f"[face_ui] display init: requested={requested or '<auto>'} dri_nodes={dri_nodes}",
+        flush=True,
+    )
+
+    for label, driver, drm_master in attempts:
+        key = (driver, drm_master)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        pygame.quit()
+        if driver:
+            os.environ["SDL_VIDEODRIVER"] = driver
+        else:
+            os.environ.pop("SDL_VIDEODRIVER", None)
+
+        if drm_master is None:
+            os.environ.pop("SDL_KMSDRM_REQUIRE_DRM_MASTER", None)
+        else:
+            os.environ["SDL_KMSDRM_REQUIRE_DRM_MASTER"] = drm_master
+
+        pygame.init()
+        init_fonts()
+        try:
+            screen = pygame.display.set_mode((W, H))
+            pygame.display.set_caption("Face UI")
+            active_driver = pygame.display.get_driver()
+            print(
+                f"[face_ui] display backend ready: attempt={label} driver={active_driver}",
+                flush=True,
+            )
+            return screen
+        except pygame.error as err:
+            last_err = err
+            print(
+                f"[face_ui] display backend failed: attempt={label} driver={driver or '<auto>'} "
+                f"drm_master={os.environ.get('SDL_KMSDRM_REQUIRE_DRM_MASTER', '<unset>')} err={err}",
+                flush=True,
+            )
+
+    raise last_err or pygame.error("no usable SDL video backend")
+
+
 def main():
     global _node
     try:
@@ -54,10 +113,7 @@ def main():
         # Instance tracking
         instances: dict = {}  # instance_id -> {app, state, error}
 
-        pygame.init()
-        init_fonts()
-        screen = pygame.display.set_mode((W, H))
-        pygame.display.set_caption("Face UI")
+        screen = init_display()
         clock = pygame.time.Clock()
 
         transition   = 0.0

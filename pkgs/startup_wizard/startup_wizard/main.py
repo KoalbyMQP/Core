@@ -1,6 +1,7 @@
+import math
+import os
 import pygame
 import sys
-import math
 import threading
 import traceback
 
@@ -26,6 +27,63 @@ if _ros_available:
 
 from startup_wizard.constants import *
 from startup_wizard.components import lerp, draw_rounded_rect
+
+
+def init_display():
+    requested = os.environ.get("SDL_VIDEODRIVER", "").strip()
+    attempts = []
+    if requested:
+        attempts.append(("requested", requested, os.environ.get("SDL_KMSDRM_REQUIRE_DRM_MASTER")))
+        if requested == "kmsdrm":
+            attempts.append(("kmsdrm-no-drm-master", "kmsdrm", "0"))
+    else:
+        attempts.append(("auto", None, None))
+    attempts.append(("auto", None, None))
+
+    seen = set()
+    last_err = None
+    dri_nodes = [node for node in ("/dev/dri/card0", "/dev/dri/renderD128") if os.path.exists(node)]
+    print(
+        f"[startup_wizard] display init: requested={requested or '<auto>'} dri_nodes={dri_nodes}",
+        flush=True,
+    )
+
+    for label, driver, drm_master in attempts:
+        key = (driver, drm_master)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        pygame.quit()
+        if driver:
+            os.environ["SDL_VIDEODRIVER"] = driver
+        else:
+            os.environ.pop("SDL_VIDEODRIVER", None)
+
+        if drm_master is None:
+            os.environ.pop("SDL_KMSDRM_REQUIRE_DRM_MASTER", None)
+        else:
+            os.environ["SDL_KMSDRM_REQUIRE_DRM_MASTER"] = drm_master
+
+        pygame.init()
+        try:
+            screen = pygame.display.set_mode((W, H))
+            pygame.display.set_caption("ZaraOS Setup")
+            active_driver = pygame.display.get_driver()
+            print(
+                f"[startup_wizard] display backend ready: attempt={label} driver={active_driver}",
+                flush=True,
+            )
+            return screen
+        except pygame.error as err:
+            last_err = err
+            print(
+                f"[startup_wizard] display backend failed: attempt={label} driver={driver or '<auto>'} "
+                f"drm_master={os.environ.get('SDL_KMSDRM_REQUIRE_DRM_MASTER', '<unset>')} err={err}",
+                flush=True,
+            )
+
+    raise last_err or pygame.error("no usable SDL video backend")
 
 
 def make_screen(state, ctx):
@@ -104,9 +162,7 @@ def main():
                 print(f"[startup_wizard] ROS2 init failed, running standalone: {e}", flush=True)
                 _node = None
 
-        pygame.init()
-        screen = pygame.display.set_mode((W, H))
-        pygame.display.set_caption("ZaraOS Setup")
+        screen = init_display()
         clock  = pygame.time.Clock()
 
         state   = "welcome"
