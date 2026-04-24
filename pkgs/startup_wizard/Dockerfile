@@ -1,7 +1,6 @@
 FROM ros:humble
 
-ENV SDL_VIDEODRIVER=dummy \
-    SDL_AUDIODRIVER=dummy \
+ENV SDL_AUDIODRIVER=dummy \
     XDG_RUNTIME_DIR=/tmp
 
 WORKDIR /ros_ws
