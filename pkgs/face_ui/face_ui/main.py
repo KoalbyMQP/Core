@@ -21,6 +21,8 @@ from face_ui.overlays.auth_code import AuthCodeOverlay
 from face_ui.overlays.error_toast import ErrorToast
 from face_ui.overlays.instance_status import InstanceStatusBar
 
+NON_RENDERING_DRIVERS = {"dummy", "offscreen"}
+
 
 def _drain_queue(q):
     """Non-blocking drain of all pending items from a queue."""
@@ -39,10 +41,11 @@ def init_display():
     if requested:
         attempts.append(("requested", requested, os.environ.get("SDL_KMSDRM_REQUIRE_DRM_MASTER")))
         if requested == "kmsdrm":
-            attempts.append(("kmsdrm-no-drm-master", "kmsdrm", "0"))
+            attempts.append(("fbcon-fallback", "fbcon", None))
     else:
+        attempts.append(("kmsdrm", "kmsdrm", None))
+        attempts.append(("fbcon", "fbcon", None))
         attempts.append(("auto", None, None))
-    attempts.append(("auto", None, None))
 
     seen = set()
     last_err = None
@@ -75,6 +78,8 @@ def init_display():
             screen = pygame.display.set_mode((W, H))
             pygame.display.set_caption("Face UI")
             active_driver = pygame.display.get_driver()
+            if active_driver in NON_RENDERING_DRIVERS:
+                raise pygame.error(f"non-rendering SDL backend selected: {active_driver}")
             print(
                 f"[face_ui] display backend ready: attempt={label} driver={active_driver}",
                 flush=True,

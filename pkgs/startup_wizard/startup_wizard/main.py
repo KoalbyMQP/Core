@@ -28,6 +28,8 @@ if _ros_available:
 from startup_wizard.constants import *
 from startup_wizard.components import lerp, draw_rounded_rect
 
+NON_RENDERING_DRIVERS = {"dummy", "offscreen"}
+
 
 def init_display():
     requested = os.environ.get("SDL_VIDEODRIVER", "").strip()
@@ -35,10 +37,11 @@ def init_display():
     if requested:
         attempts.append(("requested", requested, os.environ.get("SDL_KMSDRM_REQUIRE_DRM_MASTER")))
         if requested == "kmsdrm":
-            attempts.append(("kmsdrm-no-drm-master", "kmsdrm", "0"))
+            attempts.append(("fbcon-fallback", "fbcon", None))
     else:
+        attempts.append(("kmsdrm", "kmsdrm", None))
+        attempts.append(("fbcon", "fbcon", None))
         attempts.append(("auto", None, None))
-    attempts.append(("auto", None, None))
 
     seen = set()
     last_err = None
@@ -70,6 +73,8 @@ def init_display():
             screen = pygame.display.set_mode((W, H))
             pygame.display.set_caption("ZaraOS Setup")
             active_driver = pygame.display.get_driver()
+            if active_driver in NON_RENDERING_DRIVERS:
+                raise pygame.error(f"non-rendering SDL backend selected: {active_driver}")
             print(
                 f"[startup_wizard] display backend ready: attempt={label} driver={active_driver}",
                 flush=True,
