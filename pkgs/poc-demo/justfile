@@ -1,0 +1,17 @@
+package_name := "poc-status"
+
+# Build a local dev image (build context is the Core repo root).
+build:
+    docker build -t {{package_name}}:dev -f Dockerfile ../..
+
+# Start a new instance using the local dev image.
+run:
+    cortex run --image {{package_name}}:dev
+
+# Stream live logs for the running instance.
+logs:
+    cortex logs --follow
+
+# Stop the running instance.
+stop:
+    cortex stop
