@@ -1,6 +1,6 @@
 {
-  "name": "poc-status",
-  "image": "koalby/poc-status",
+  "name": "poc-demo",
+  "image": "koalby/poc-demo",
   "essential": false,
   "autostart": false,
   "depends": [],
