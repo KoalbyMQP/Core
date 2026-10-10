@@ -5,6 +5,9 @@ name = "python_example"
 version = "0.0.1"
 description = "Example Python ROS2 package"
 requires-python = ">=3.8"
+# Defined in setup.py (ament_python needs them there); without this,
+# setuptools ignores them and no console_scripts get installed.
+dynamic = ["license", "maintainers", "scripts"]
 dependencies = [
     "rclpy",
 ]

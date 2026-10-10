@@ -1,0 +1,24 @@
+[project]
+name = "poc_demo"
+version = "0.0.1"
+description = "Proof-of-concept demo app ZaraOS"
+requires-python = ">=3.11"
+dependencies = [
+    # "rclpy",
+    "crab-api",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["poc_demo"]
+
+[tool.uv.sources]
+crab-api = { url = "https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api-0.1.0-py3-none-any.whl" }
