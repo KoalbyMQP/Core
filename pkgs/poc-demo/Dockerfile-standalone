@@ -16,8 +16,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
 ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
-    UV_PYTHON_DOWNLOADS=never \
-    URCHIN_PORT=socket://10.0.2.2:5555
+    UV_PYTHON_DOWNLOADS=never
 
 WORKDIR /app
 

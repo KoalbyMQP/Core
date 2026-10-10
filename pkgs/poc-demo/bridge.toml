@@ -17,3 +17,11 @@ JointName = "Hip" #Name of Joint from URDF file EXACTLY
 Bounds = [-50,50] #Bounds from CAD software
 AlignmentAngle = 0 #Angle the motor should be in for assembly
 
+[[Motor]]
+MotorNum = 18
+MotorBrand = "HerkuleX"
+MotorModel = "0601" #Motor Model
+JointName = "Test" #Name of Joint from URDF file EXACTLY
+Bounds = [-50,50] #Bounds from CAD software
+AlignmentAngle = 0 #Angle the motor should be in for assembly
+
