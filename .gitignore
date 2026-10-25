@@ -325,3 +325,8 @@ Cargo.lock
 
 # Go
 vendor/
+
+# ROS
+install/
+log/
+build/

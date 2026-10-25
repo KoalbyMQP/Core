@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>poc_demo</name>
+  <version>0.0.1</version>
+  <description>Proof-of-concept demo node for ZaraOS</description>
+  <maintainer email="gr-humanoid-robots_software-engg_26-27@wpi.edu">Humanoind Robots - Software Engineering Team</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+
+  <!-- <exec_depend>https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api-0.1.0-py3-none-any.whl</exec_depend> -->
+  <exec_depend>crab_api</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

@@ -1,0 +1,12 @@
+{
+  "name": "poc-demo",
+  "image": "koalby/poc-demo",
+  "essential": false,
+  "autostart": false,
+  "privileged": true,
+  "depends": [],
+  "env": {
+    "ROS_DOMAIN_ID": "42",
+    "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp"
+  }
+}
