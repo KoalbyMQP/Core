@@ -1,5 +1,5 @@
 # Build from the Core repo root:
-#   docker build -t poc-demo-ros:dev -f pkgs/poc-demo/Dockerfile-ros .
+#   docker build --platform linux/arm64 -t poc-demo-ros:dev -f pkgs/poc-demo/Dockerfile-ros .
 FROM ros:humble
 
 RUN apt-get update && \
@@ -10,15 +10,20 @@ RUN apt-get update && \
     ros-humble-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
+# crab_api is not a rosdep key, so install it from the release wheel directly.
+RUN python3 -m pip install --no-cache-dir \
+    https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api-0.1.1-py3-none-any.whl
+
 WORKDIR /ros_ws
 COPY pkgs/poc-demo /ros_ws/src/poc-demo
 COPY pkgs/poc-demo/bridge.toml /ros_ws/bridge.toml
 
 RUN /bin/bash -c 'source /opt/ros/humble/setup.bash && \
     if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init; fi && \
-    python3 -m pip install --upgrade pip https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api-0.1.1-py3-none-any.whl \
     rosdep update && \
-    rosdep install --from-paths src --ignore-src -r -y && \
+    apt-get update && \
+    rosdep install --from-paths src --ignore-src -r -y --skip-keys crab_api && \
+    rm -rf /var/lib/apt/lists/* && \
     colcon build --packages-select poc_demo && \
     rm -rf build log'
 

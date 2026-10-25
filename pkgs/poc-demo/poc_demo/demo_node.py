@@ -29,9 +29,8 @@ class DemoNode(Node):
 
         self.get_logger().info("Moving shoulder")
         command = HerkuleX.MoveOne("Shoulder", float(-23), 40, JogLedColor.LED_BLUE)
-        ticket = self.crab.send(TicketType.Interrupt, [command], None, False)
-        self.get_logger().info("Ticket created. Here it is:")
-        self.get_logger().info(f"{ticket}")
+        ticketNumber = self.crab.send(TicketType.Interrupt, [command], None, False)
+        self.get_logger().info(f"Ticket #{ticketNumber} sent")
 
         # time.sleep(1)
         # print("\n\n\n\n\n\n")
@@ -39,8 +38,8 @@ class DemoNode(Node):
         # ticket = self.crab.send(TicketType.Asynchronous, [command], None, False)
         # print("Main:ticket" + str(ticket))
 
-        self.get_logger().info("Health check #2")
-        self.crab.GetHealth("AckCheck")
+        # self.get_logger().info("Health check #2")
+        # self.crab.GetHealth("AckCheck")
 
 
 def main() -> None:
