@@ -7,6 +7,12 @@
   <maintainer email="gr-humanoid-robots_software-engg_26-27@wpi.edu">Humanoind Robots - Software Engineering Team</maintainer>
   <license>MIT</license>
 
+  <depend>rclpy</depend>
+  <depend>zaraos_interfaces</depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <!-- The Crab API (Urchin-Framework crab_api wheel) is not a rosdep key and
+       must be pip-installed separately; see the Dockerfile. -->
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
