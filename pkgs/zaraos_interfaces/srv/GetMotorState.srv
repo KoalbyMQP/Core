@@ -1,0 +1,6 @@
+# Get the current position of a single motor
+string joint_name        # joint name as listed in the bridge file
+---
+bool success
+float64 position         # current position in degrees
+string message           # reason for failure when success is false

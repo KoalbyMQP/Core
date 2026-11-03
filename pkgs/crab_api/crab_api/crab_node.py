@@ -13,7 +13,8 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from Types import Item
-from zaraos_interfaces.msg import MotorMove, MotorState, MotorStates
+from zaraos_interfaces.msg import MotorMove
+from zaraos_interfaces.srv import GetMotorState
 
 # HerkuleX.MoveOne takes its play time in firmware ticks rather than
 # milliseconds, and rejects anything over 500 ms.
@@ -24,7 +25,7 @@ ANGLE_PREFIX = "RawTicket:"
 
 
 class CrabNode(Node):
-    """Forwards /motor/move to Urchin and publishes /motor/states."""
+    """Forwards /motor/move to Urchin and serves /motor/state."""
 
     def __init__(self):
         super().__init__("crab")
@@ -33,7 +34,6 @@ class CrabNode(Node):
             get_package_share_directory("crab_api"), "bridge.toml"
         )
         bridge_file = self.declare_parameter("bridge_file", default_bridge).value
-        state_period = self.declare_parameter("state_publish_period", 1.0).value
         self.angle_timeout = self.declare_parameter("angle_timeout", 0.5).value
 
         self.get_logger().info(f"Loading bridge file {bridge_file}")
@@ -44,8 +44,7 @@ class CrabNode(Node):
         self.joints = [m.Joint.decode() for m in self.crab.bridge.Motors]
         self.get_logger().info(f"Connected motors: {', '.join(self.joints)}")
 
-        self.states_pub = self.create_publisher(MotorStates, "/motor/states", 10)
-        # Separate groups so a slow state poll does not hold up moves.
+        # Separate groups so a slow angle read does not hold up moves.
         self.create_subscription(
             MotorMove,
             "/motor/move",
@@ -53,13 +52,12 @@ class CrabNode(Node):
             10,
             callback_group=MutuallyExclusiveCallbackGroup(),
         )
-        self.create_timer(
-            state_period,
-            self.publish_states,
+        self.create_service(
+            GetMotorState,
+            "/motor/state",
+            self.state_callback,
             callback_group=MutuallyExclusiveCallbackGroup(),
         )
-
-        self.get_logger().info(f"Publishing motor states every {state_period} s")
 
     def move_callback(self, msg: MotorMove) -> None:
         """Send a MoveOne command for the requested joint."""
@@ -116,22 +114,33 @@ class CrabNode(Node):
                 return float(line[len(ANGLE_PREFIX) :])
         return None
 
-    def publish_states(self) -> None:
-        """Read every joint's angle and publish them together."""
-        msg = MotorStates()
-        msg.stamp = self.get_clock().now().to_msg()
+    def state_callback(
+        self, request: GetMotorState.Request, response: GetMotorState.Response
+    ) -> GetMotorState.Response:
+        """Read the requested joint's angle from Urchin."""
+        self.get_logger().info(f"Received state: joint={request.joint_name}")
 
-        for joint in self.joints:
-            with self.crab_lock:
-                angle = self.read_angle(joint)
-            if angle is None:
-                self.get_logger().warn(f"No angle reported for {joint}")
-                continue
-            msg.states.append(MotorState(joint_name=joint, position=angle))
+        joint = request.joint_name
+        if joint not in self.joints:
+            response.success = False
+            response.message = (
+                f'Unknown joint "{joint}", expected one of: {", ".join(self.joints)}'
+            )
+            self.get_logger().error(response.message)
+            return response
 
-        self.states_pub.publish(msg)
-        summary = ", ".join(f"{s.joint_name}={s.position:.2f}" for s in msg.states)
-        self.get_logger().info(f"Published motor states: [{summary}]")
+        with self.crab_lock:
+            angle = self.read_angle(joint)
+        if angle is None:
+            response.success = False
+            response.message = f"No angle reported for {joint}"
+            self.get_logger().warn(response.message)
+            return response
+
+        response.success = True
+        response.position = angle
+        self.get_logger().info(f"Reported state: {joint}={angle:.2f} deg")
+        return response
 
     def destroy_node(self) -> None:
         """Stop the Crab serial thread before tearing down the node."""
