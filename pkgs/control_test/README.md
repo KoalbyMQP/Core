@@ -41,3 +41,18 @@ Write these logs to a file with `tee` using:
    ros2 run control_test control_test_node)  2>&1 | tee -a control_test.log
 ```
 
+
+## Building container image
+
+Run from the root of the `Core` repo:
+
+```sh
+docker buildx build \
+    --platform linux/arm64 \
+    -f pkgs/control_test/Dockerfile \
+    -t control-test:dev \
+    --load .
+```
+
+Or, from this directory, use the `justfile`: `just build`, `just run`,
+`just logs`, `just stop`.
