@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'crab_node = crab_api.crab_node:main',
+            'crab2_node = crab_api.crab2_node:main',
         ],
     },
 )
