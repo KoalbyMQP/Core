@@ -17,7 +17,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AuthStatus.msg"
   "msg/InstanceState.msg"
   "msg/LogLine.msg"
+  "msg/MotorMove.msg"
   "msg/SystemError.msg"
+  "srv/GetMotorState.srv"
   "srv/WifiScan.srv"
   "srv/WifiConnect.srv"
   DEPENDENCIES std_msgs builtin_interfaces

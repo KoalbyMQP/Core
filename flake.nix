@@ -76,6 +76,19 @@
           propagatedBuildInputs = [ pyPkgs.pyserial pyPkgs.tomlkit tomlkit-extras ];
         };
 
+        # Urchin-Framework client used by poc-demo (pinned to match uv.lock).
+        crab-api2 = pyPkgs.buildPythonPackage rec {
+          pname = "crab_api2";
+          version = "0.1.0";
+          format = "wheel";
+          src = pkgs.fetchurl {
+            url =
+            "https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/${pname}-${version}-py3-none-any.whl";
+            sha256 = "037a388f53bece0ea38a20bce8cd27d96ede965e222d3d984ff8347b29df73d8";
+          };
+          propagatedBuildInputs = [ pyPkgs.pyserial ];
+        };
+
         rosEnv = ros.buildEnv {
           underlay = true;
           paths = with ros; [
@@ -110,6 +123,7 @@
             pyPkgs.pygame
             pyPkgs.pytest
             crab-api
+            crab-api2
           ];
         };
 
