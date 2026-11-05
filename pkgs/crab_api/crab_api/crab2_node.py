@@ -82,13 +82,16 @@ class Crab2Node(Node):
         if ticket < 0:
             self.get_logger().error("Urchin has no free ticket for move")
         else:
-            self.get_logger().info(f"Move sent as ticket #{ticket}")
+            self.get_logger().info(f"MoveOne sent as ticket #{ticket}")
 
     def read_angle(self, joint: str) -> float | None:
         """Ask Urchin for a joint's angle in degrees, or None on timeout."""
         command = get_angle(joint)
-        self.crab.send(TicketType.INTERRUPT, [command])
-        # TODO: get angle response
+        ticket = self.crab.send(TicketType.INTERRUPT, [command])
+        if ticket < 0:
+            self.get_logger().error("Urchin has no free ticket for move")
+        else:
+            self.get_logger().info(f"GetAngle sent as ticket #{ticket}")
         return None
 
     def state_callback(
