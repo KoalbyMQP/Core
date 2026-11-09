@@ -4,7 +4,7 @@ import os
 
 import rclpy
 from ament_index_python.packages import get_package_share_directory
-from crab_api2 import Crab, TicketType
+from crab_api2 import Crab, NoFreeTicketError, TicketType
 from crab_api2.herkulex import JogLedColor, get_angle, move_one
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
@@ -78,20 +78,22 @@ class Crab2Node(Node):
             self.get_logger().error(f"Rejected move: {e}")
             return
 
-        ticket = self.crab.send(TicketType.INTERRUPT, [command])
-        if ticket < 0:
-            self.get_logger().error("Urchin has no free ticket for move")
-        else:
+        try:
+            ticket = self.crab.send(TicketType.INTERRUPT, [command])
             self.get_logger().info(f"MoveOne sent as ticket #{ticket}")
+        except NoFreeTicketError:
+            self.get_logger().error("Urchin has no free ticket for move")
 
     def read_angle(self, joint: str) -> float | None:
         """Ask Urchin for a joint's angle in degrees, or None on timeout."""
         command = get_angle(joint)
-        ticket = self.crab.send(TicketType.INTERRUPT, [command])
-        if ticket < 0:
-            self.get_logger().error("Urchin has no free ticket for move")
-        else:
+
+        try:
+            ticket = self.crab.send(TicketType.INTERRUPT, [command])
             self.get_logger().info(f"GetAngle sent as ticket #{ticket}")
+        except NoFreeTicketError:
+            self.get_logger().error("Urchin has no free ticket for move")
+
         return None
 
     def state_callback(
