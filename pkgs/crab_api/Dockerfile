@@ -8,10 +8,10 @@ RUN apt-get update && \
     ros-humble-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
-# The Crab API is not a rosdep key, so install it from the release wheel directly.
+# The Crab APIs are not rosdep keys, so install them from the release wheels directly.
 RUN python3 -m pip install --no-cache-dir \
-    https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api-0.1.1-py3-none-any.whl
-    https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api2-0.1.0-py3-none-any.whl
+    https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api-0.1.1-py3-none-any.whl \
+    https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api2-0.2.0-py3-none-any.whl
 
 WORKDIR /ros_ws
 COPY pkgs/zaraos_interfaces /ros_ws/src/zaraos_interfaces
@@ -37,4 +37,4 @@ ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENTRYPOINT ["/bin/bash", "-c", \
     "source /opt/ros/humble/setup.bash && \
      source /ros_ws/install/setup.bash && \
-     exec ros2 run crab_api crab_node"]
+     exec ros2 run crab_api crab2_node"]
