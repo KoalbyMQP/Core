@@ -15,13 +15,27 @@ CHUNK_START = "[control_test]: Publishing move:"
 CHUNK_END = "[control_test]: Received state:"
 LINE = re.compile(r"^\[(\w+)\] \[([\d.]+)\] \[([\w-]+)\]: (.*)$")
 
+# Crab API 
+# Event name -> (node, message prefix). The first matching line in a chunk wins.
+# EVENTS = {
+#     "publish_move": ("control_test", "Publishing move:"),
+#     "crab_recv_move": ("crab", "Received move:"),
+#     "request_state": ("control_test", "Requesting state:"),
+#     "crab_recv_state": ("crab", "Received state:"),
+#     "crab_sent_ticket": ("crab", "Move sent as ticket"),
+#     "sim_read_position": ("motor-sim", None),  # matched below
+#     "crab_reported_state": ("crab", "Reported state:"),
+#     "test_recv_state": ("control_test", "Received state:"),
+# }
+
+# Crab API 2
 # Event name -> (node, message prefix). The first matching line in a chunk wins.
 EVENTS = {
     "publish_move": ("control_test", "Publishing move:"),
     "crab_recv_move": ("crab", "Received move:"),
     "request_state": ("control_test", "Requesting state:"),
     "crab_recv_state": ("crab", "Received state:"),
-    "crab_sent_ticket": ("crab", "Move sent as ticket"),
+    "crab_sent_ticket": ("crab", "MoveOne sent as ticket"),
     "sim_read_position": ("motor-sim", None),  # matched below
     "crab_reported_state": ("crab", "Reported state:"),
     "test_recv_state": ("control_test", "Received state:"),
