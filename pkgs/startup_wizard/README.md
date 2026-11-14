@@ -20,6 +20,22 @@ WiFi scan and connect operations are routed through ROS2 services (`/zaraos/wifi
 
 **Module injection pattern**: `system_ros.py` implements the same interface as `system.py`. When ROS2 is available, `main.py` injects `system_ros` into `sys.modules["system"]` before screens are imported, so screen code calls `system.scan_networks()` without knowing whether ROS2 is behind it.
 
+## Bluetooth (Find IP)
+
+While the wizard runs, `ble_server.py` advertises a Bluetooth LE service so the Driver Station's **Find IP with Bluetooth** button can read the robot's IP without a network connection. It talks to the host's `bluetoothd` over D-Bus (the container needs `/run/dbus` mounted). Because it lives in the wizard, the robot stops advertising once setup is done.
+
+The message format (service/characteristic UUIDs, `get-ip` request, `0,<ip>` / `1,<error>` responses) is in `ble_protocol.py` and must match the Driver Station's `lib/ble-get-ip.ts`.
+
+Test against a Linux machine with BlueZ instead of a Pi:
+
+```bash
+sudo python3 -m startup_wizard.ble_server
+```
+
+Without a Bluetooth adapter (desktop, QEMU) it logs a message and the wizard runs normally.
+
+Unit tests for the protocol: `pytest -o pythonpath=. test`
+
 ## Desktop Testing
 
 ```bash
