@@ -26,6 +26,13 @@ While the wizard runs, `ble_server.py` advertises a Bluetooth LE service so the 
 
 The message format (service/characteristic UUIDs, `get-ip` request, `0,<ip>` / `1,<error>` responses) is in `ble_protocol.py` and must match the Driver Station's `lib/ble-get-ip.ts`.
 
+Commands:
+
+| Request | Reply |
+|---|---|
+| `get-ip` | `0,<ip>` |
+| `set-time {"epoch": <unix seconds>}` | `0,ok`; sets the Pi's clock, which certificate-based WiFi (WPI Wireless) needs before the Pi is online |
+
 Test against a Linux machine with BlueZ instead of a Pi:
 
 ```bash

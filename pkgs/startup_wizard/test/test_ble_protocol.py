@@ -88,3 +88,57 @@ def test_unknown_command():
 def test_interface_addresses_includes_loopback():
     # Runs against the real machine: loopback always has 127.0.0.1.
     assert p.interface_addresses().get("lo") == "127.0.0.1"
+
+
+# Arguments
+def test_parse_command_without_args():
+    assert p.parse_command("get-ip") == ("get-ip", {})
+    assert p.parse_command("  get-ip  ") == ("get-ip", {})
+
+
+def test_parse_command_with_json_args():
+    assert p.parse_command('set-time {"epoch": 1763251200}') == ("set-time", {"epoch": 1763251200})
+
+
+def test_bad_args_are_reported_to_client():
+    for bad in ("set-time {epoch", "set-time [1, 2]", 'set-time "x"'):
+        ok, msg = p.handle_command(bad)
+        assert not ok
+        assert msg == "Invalid arguments for set-time: expected a JSON object"
+
+
+# set-time
+def _set_time(args, clock_error=None):
+    calls = []
+
+    def fake_clock(epoch):
+        if clock_error:
+            raise clock_error
+        calls.append(epoch)
+
+    result = p.handle_command(f"set-time {args}", set_clock=fake_clock)
+    return result, calls
+
+
+def test_set_time_sets_clock():
+    assert _set_time('{"epoch": 1763251200}') == ((True, "ok"), [1763251200])
+    assert _set_time('{"epoch": 1763251200.5}') == ((True, "ok"), [1763251200.5])
+
+
+def test_set_time_requires_numeric_epoch():
+    for args in ("", "{}", '{"epoch": "now"}', '{"epoch": true}', '{"epoch": null}'):
+        (ok, msg), calls = _set_time(args)
+        assert not ok and "numeric" in msg
+        assert calls == []
+
+
+def test_set_time_rejects_milliseconds_and_nonsense():
+    for epoch in (1763251200000, 0, -5, 12345):
+        (ok, msg), calls = _set_time(f'{{"epoch": {epoch}}}')
+        assert not ok and "out of range" in msg
+        assert calls == []
+
+
+def test_set_time_reports_permission_error():
+    (ok, msg), _ = _set_time('{"epoch": 1763251200}', PermissionError("Operation not permitted"))
+    assert (ok, msg) == (False, "Could not set clock: Operation not permitted")
