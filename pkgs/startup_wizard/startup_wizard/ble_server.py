@@ -14,6 +14,7 @@ Talks to the host's bluetoothd over the system D-Bus, so the container needs
 """
 
 import socket
+import sys
 import threading
 
 import dbus
@@ -86,6 +87,8 @@ class CommunicationCharacteristic(dbus.service.Object):
         self.service = service
         self.notifying = False
         self.buffer = ""
+        # Commands run one at a time so their responses can't interleave.
+        self.command_lock = threading.Lock()
 
     def properties(self):
         return {
@@ -106,11 +109,23 @@ class CommunicationCharacteristic(dbus.service.Object):
     def WriteValue(self, value, options):
         self.buffer += bytes(value).decode("utf-8", errors="replace")
         messages, self.buffer = ble_protocol.split_messages(self.buffer)
+        # Commands like wifi-connect take up to ~35 s; run them off the D-Bus
+        # loop so BlueZ gets its write reply right away.
         for message in messages:
-            ok, payload = ble_protocol.handle_command(message)
-            _log(f"{message!r} -> {'ok' if ok else 'error'}: {payload}")
-            for chunk in ble_protocol.format_response(ok, payload):
-                self._notify(chunk)
+            threading.Thread(target=self._run_command, args=(message,), daemon=True).start()
+
+    def _run_command(self, message):
+        with self.command_lock:
+            ok, payload = ble_protocol.handle_command(message, system=_wifi_backend())
+            # Log only the command name: wifi-connect arguments include the password.
+            _log(f"{message.split(' ', 1)[0]} -> {'ok' if ok else 'error'}: {payload}")
+            GLib.idle_add(self._send, ble_protocol.format_response(ok, payload))
+
+    def _send(self, chunks):
+        # Runs on the GLib loop, where D-Bus signals must be emitted.
+        for chunk in chunks:
+            self._notify(chunk)
+        return False  # one-shot idle callback
 
     @dbus.service.method(GATT_CHRC_IFACE)
     def StartNotify(self):
@@ -155,6 +170,16 @@ class Advertisement(dbus.service.Object):
     @dbus.service.method(LE_ADV_IFACE)
     def Release(self):
         _log("advertisement released by BlueZ")
+
+
+def _wifi_backend():
+    """The WiFi module the wizard's screens use: main.py injects system_ros
+    (container) or test_desktop.py injects system_mock. Standalone runs fall
+    back to system.py, which calls wpa_cli directly."""
+    backend = sys.modules.get("system")
+    if backend is None:
+        from startup_wizard import system as backend
+    return backend
 
 
 def _find_adapter(bus):

@@ -1,3 +1,5 @@
+import json
+
 from startup_wizard import ble_protocol as p
 
 
@@ -142,3 +144,75 @@ def test_set_time_rejects_milliseconds_and_nonsense():
 def test_set_time_reports_permission_error():
     (ok, msg), _ = _set_time('{"epoch": 1763251200}', PermissionError("Operation not permitted"))
     assert (ok, msg) == (False, "Could not set clock: Operation not permitted")
+
+
+# WiFi
+class FakeSystem:
+    """Stands in for system / system_ros: same scan_networks/connect_wifi interface."""
+
+    def __init__(self, networks=(), connect_result=(True, "Connected")):
+        self.networks = list(networks)
+        self.connect_result = connect_result
+        self.connected = []
+
+    def scan_networks(self):
+        return self.networks
+
+    def connect_wifi(self, ssid, password):
+        self.connected.append((ssid, password))
+        return self.connect_result
+
+
+def _wifi(command, system, addresses=None):
+    return p.handle_command(command, lambda: addresses or {}, system=system)
+
+
+def test_wifi_scan_returns_json_list():
+    system = FakeSystem([("Home", 80), ("Café 5G", 41)])
+    ok, payload = _wifi("wifi-scan", system)
+    assert ok
+    assert json.loads(payload) == [{"ssid": "Home", "signal": 80}, {"ssid": "Café 5G", "signal": 41}]
+
+
+def test_wifi_scan_with_no_networks():
+    assert _wifi("wifi-scan", FakeSystem()) == (True, "[]")
+
+
+def test_long_scan_result_survives_chunking():
+    system = FakeSystem([(f"Network number {i}", i) for i in range(40)])
+    ok, payload = _wifi("wifi-scan", system)
+    assert len(payload) > 3 * p.CHUNK_SIZE
+    assert _driver_station_decode(p.format_response(ok, payload)) == (True, payload)
+
+
+def test_wifi_connect_returns_new_wifi_ip():
+    system = FakeSystem()
+    addresses = {"eth0": "10.0.0.2", "wlan0": "192.168.4.20"}
+    command = 'wifi-connect {"ssid": "My \\"Home\\" WiFi", "password": "p@ss, word!"}'
+    assert _wifi(command, system, addresses) == (True, "192.168.4.20")
+    assert system.connected == [('My "Home" WiFi', "p@ss, word!")]
+
+
+def test_wifi_connect_falls_back_when_no_ip_yet():
+    assert _wifi('wifi-connect {"ssid": "Home", "password": "12345678"}', FakeSystem()) == (True, "Connected")
+
+
+def test_wifi_connect_reports_failure():
+    system = FakeSystem(connect_result=(False, "DHCP failed — check password"))
+    result = _wifi('wifi-connect {"ssid": "Home", "password": "wrongpass"}', system)
+    assert result == (False, "DHCP failed — check password")
+
+
+def test_wifi_connect_validates_arguments():
+    system = FakeSystem()
+    for args in ("", '{"password": "12345678"}', '{"ssid": "", "password": "12345678"}'):
+        ok, msg = _wifi(f"wifi-connect {args}", system)
+        assert not ok and "ssid" in msg
+    for password in ('"short"', '"' + "x" * 64 + '"', "null", "12345678"):
+        ok, msg = _wifi(f'wifi-connect {{"ssid": "Home", "password": {password}}}', system)
+        assert not ok and "8-63" in msg
+    assert system.connected == []
+
+
+def test_wifi_commands_without_backend():
+    assert p.handle_command("wifi-scan") == (False, "WiFi is not available")

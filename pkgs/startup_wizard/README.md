@@ -20,9 +20,9 @@ WiFi scan and connect operations are routed through ROS2 services (`/zaraos/wifi
 
 **Module injection pattern**: `system_ros.py` implements the same interface as `system.py`. When ROS2 is available, `main.py` injects `system_ros` into `sys.modules["system"]` before screens are imported, so screen code calls `system.scan_networks()` without knowing whether ROS2 is behind it.
 
-## Bluetooth (Find IP)
+## Bluetooth setup
 
-While the wizard runs, `ble_server.py` advertises a Bluetooth LE service so the Driver Station's **Find IP with Bluetooth** button can read the robot's IP without a network connection. It talks to the host's `bluetoothd` over D-Bus (the container needs `/run/dbus` mounted). Because it lives in the wizard, the robot stops advertising once setup is done.
+While the wizard runs, `ble_server.py` advertises a Bluetooth LE service so the Driver Station can find the robot's IP (**Find IP with Bluetooth**) and put it on WiFi without a network connection. It talks to the host's `bluetoothd` over D-Bus (the container needs `/run/dbus` mounted). Because it lives in the wizard, the robot stops advertising once setup is done.
 
 The message format (service/characteristic UUIDs, `get-ip` request, `0,<ip>` / `1,<error>` responses) is in `ble_protocol.py` and must match the Driver Station's `lib/ble-get-ip.ts`.
 
@@ -32,6 +32,10 @@ Commands:
 |---|---|
 | `get-ip` | `0,<ip>` |
 | `set-time {"epoch": <unix seconds>}` | `0,ok`; sets the Pi's clock, which certificate-based WiFi (WPI Wireless) needs before the Pi is online |
+| `wifi-scan` | `0,[{"ssid": "...", "signal": 0-100}, ...]` |
+| `wifi-connect {"ssid": "...", "password": "..."}` | `0,<new ip>`; joins a WPA-PSK network |
+
+WiFi commands use the same backend as the touchscreen screens (`system_ros` in the container), so both setup paths behave the same. Connecting to WiFi does not finish setup: the wizard, and Bluetooth, keep running until setup is completed on the touchscreen.
 
 Test against a Linux machine with BlueZ instead of a Pi:
 

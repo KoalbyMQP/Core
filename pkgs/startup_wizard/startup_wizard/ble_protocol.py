@@ -127,8 +127,35 @@ def _set_time(args, set_clock):
     return True, "ok"
 
 
-def handle_command(command, get_addresses=interface_addresses, set_clock=set_system_clock):
-    """Run one request and return (ok, payload)."""
+def _wifi_scan(system):
+    networks = system.scan_networks()
+    return True, json.dumps([{"ssid": ssid, "signal": int(signal)} for ssid, signal in networks])
+
+
+def _wifi_connect(args, system, get_addresses):
+    ssid = args.get("ssid")
+    password = args.get("password")
+    if not isinstance(ssid, str) or not ssid:
+        return False, "wifi-connect needs a non-empty \"ssid\""
+    # The wizard configures WPA-PSK, which requires an 8-63 character password.
+    if not isinstance(password, str) or not 8 <= len(password) <= 63:
+        return False, "wifi-connect needs a \"password\" of 8-63 characters"
+
+    ok, message = system.connect_wifi(ssid, password)
+    if not ok:
+        return False, message
+    # Reply with the new WiFi address so the Driver Station can connect to it.
+    addresses = get_addresses()
+    return True, addresses.get("wlan0") or pick_ip(addresses) or message
+
+
+def handle_command(command, get_addresses=interface_addresses, set_clock=set_system_clock,
+                   system=None):
+    """Run one request and return (ok, payload).
+
+    `system` is the wizard's WiFi backend (system / system_ros / system_mock),
+    so Bluetooth and touchscreen setup use the same WiFi code.
+    """
     try:
         name, args = parse_command(command)
     except ValueError as e:
@@ -141,4 +168,10 @@ def handle_command(command, get_addresses=interface_addresses, set_clock=set_sys
         return True, ip
     if name == "set-time":
         return _set_time(args, set_clock)
+    if name in ("wifi-scan", "wifi-connect"):
+        if system is None:
+            return False, "WiFi is not available"
+        if name == "wifi-scan":
+            return _wifi_scan(system)
+        return _wifi_connect(args, system, get_addresses)
     return False, f"Unknown command: {name}"
