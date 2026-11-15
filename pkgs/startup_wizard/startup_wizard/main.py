@@ -150,9 +150,25 @@ def draw_progress_dots(surf, state):
             pygame.draw.circle(surf, WHITE, (x, y), dot_r, 1)
 
 
+def start_ble():
+    """Advertise over Bluetooth so the Driver Station can find this robot's IP.
+
+    Runs only as long as the wizard does, so the robot stops being
+    discoverable once setup is finished.
+    """
+    try:
+        from startup_wizard import ble_server
+    except ImportError as e:
+        print(f"[startup_wizard] Bluetooth setup disabled: {e}", flush=True)
+        return
+    ble_server.start()
+
+
 def main():
     global _node
     try:
+        start_ble()
+
         # Initialize ROS2 if available
         if _ros_available:
             try:
