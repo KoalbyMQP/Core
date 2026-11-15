@@ -1,8 +1,7 @@
 from startup_wizard import ble_protocol as p
 
 
-# ── Request framing ──────────────────────────────────────────────────────────
-
+# Request framing
 def test_split_single_message():
     assert p.split_messages("get-ip\0") == (["get-ip"], "")
 
@@ -18,8 +17,7 @@ def test_split_multiple_messages_and_ignores_empty():
     assert p.split_messages("a\0\0b\0c") == (["a", "b"], "c")
 
 
-# ── Response encoding ────────────────────────────────────────────────────────
-
+# Response encoding
 def test_format_success():
     assert p.format_response(True, "10.0.0.5") == [b"0,10.0.0.5\0"]
 
@@ -56,8 +54,7 @@ def test_driver_station_reads_short_and_long_responses():
     assert _driver_station_decode(p.format_response(False, "err")) == (False, "err")
 
 
-# ── IP selection ─────────────────────────────────────────────────────────────
-
+# IP selection
 def test_prefers_wifi_then_ethernet():
     addrs = {"eth0": "10.0.0.2", "wlan0": "10.0.0.3", "lo": "127.0.0.1"}
     assert p.pick_ip(addrs) == "10.0.0.3"
@@ -75,8 +72,7 @@ def test_no_usable_interface():
     assert p.pick_ip({"lo": "127.0.0.1", "docker0": "172.17.0.1"}) is None
 
 
-# ── Commands ─────────────────────────────────────────────────────────────────
-
+# Commands
 def test_get_ip_command():
     assert p.handle_command("get-ip", lambda: {"wlan0": "10.1.2.3"}) == (True, "10.1.2.3")
 
