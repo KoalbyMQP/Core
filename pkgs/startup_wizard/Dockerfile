@@ -9,6 +9,8 @@ COPY pkgs /ros_ws/src/
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         python3-pygame \
+        python3-dbus \
+        python3-gi \
         ros-humble-rmw-cyclonedds-cpp \
         ros-humble-cyclonedds && \
     rm -rf /var/lib/apt/lists/*
