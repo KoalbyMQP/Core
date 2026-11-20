@@ -1,0 +1,16 @@
+{
+  "name": "crab-api",
+  "image": "ghcr.io/koalbymqp/crab-api",
+  "essential": false,
+  "autostart": false,
+  "privileged": true,
+  "depends": [],
+  "env": {
+    "ROS_DOMAIN_ID": "42",
+    "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp"
+  },
+  "volumes": [
+    "/dev:/dev",
+    "/run/udev:/run/udev:ro"
+  ]
+}
