@@ -11,7 +11,8 @@ RUN apt-get update && \
 # The Crab APIs are not rosdep keys, so install them from the release wheels directly.
 RUN python3 -m pip install --no-cache-dir \
     https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api-0.1.1-py3-none-any.whl \
-    https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api2-0.2.0-py3-none-any.whl
+    https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api2-0.3.0.dev0-py3-none-any.whl
+    # https://github.com/KoalbyMQP/Urchin-Framework/releases/download/crab-api/crab_api2-0.2.0-py3-none-any.whl \
 
 WORKDIR /ros_ws
 COPY pkgs/zaraos_interfaces /ros_ws/src/zaraos_interfaces
