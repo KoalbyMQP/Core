@@ -7,6 +7,7 @@ endif()
 
 # Find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
@@ -25,6 +26,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/WifiConnect.srv"
   DEPENDENCIES std_msgs builtin_interfaces
 )
+
+# zara_commands package
+ament_python_install_package(zara_commands)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
