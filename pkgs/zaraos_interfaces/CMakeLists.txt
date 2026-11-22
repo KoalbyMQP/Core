@@ -19,6 +19,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/LogLine.msg"
   "msg/MotorMove.msg"
   "msg/SystemError.msg"
+  "srv/Command.srv"
   "srv/GetMotorState.srv"
   "srv/WifiScan.srv"
   "srv/WifiConnect.srv"
