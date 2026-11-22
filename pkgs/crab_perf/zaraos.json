@@ -1,0 +1,12 @@
+{
+  "name": "crab-perf",
+  "image": "ghcr.io/koalbymqp/crab-perf",
+  "essential": false,
+  "autostart": false,
+  "depends": [],
+  "env": {
+    "ROS_DOMAIN_ID": "42",
+    "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
+    "PERF_MODE": "local"
+  }
+}
