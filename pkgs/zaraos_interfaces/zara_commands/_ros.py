@@ -12,7 +12,7 @@ import threading
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
-from zara_interfaces.srv import Command
+from zaraos_interfaces.srv import Command
 
 from . import dispatch, ros_name, service_name
 
