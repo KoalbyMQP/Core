@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>crab_perf</name>
+  <version>0.0.0</version>
+  <description>Measures ROS 2 middleware performance for the crab_api motor interface using performance_test</description>
+  <maintainer email="gr-humanoid-robots_software-engg_26-27@wpi.edu">Humanoind Robots - Software Engineering Team</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>zaraos_interfaces</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>performance_test</exec_depend>
+  <exec_depend>rmw_cyclonedds_cpp</exec_depend>
+  <exec_depend>rmw_fastrtps_cpp</exec_depend>
+  <exec_depend>rmw_zenoh_cpp</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

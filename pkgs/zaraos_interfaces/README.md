@@ -10,12 +10,14 @@ Shared ROS2 message and service definitions used by all ZaraOS nodes. This is a 
 | `AuthStatus` | Pairing outcome: `paired`, `expired`, or `failed` |
 | `InstanceState` | Container state change: `starting`, `running`, `stopping`, `stopped`, `crashed` |
 | `LogLine` | Single container log line (instance ID, stream, content, sequence number) |
+| `MotorMove` | Command a motor (by joint name) to move to a position over a duration |
 | `SystemError` | System-level error/warning for UI display (source, severity, message) |
 
 ## Services
 
 | Service | Description |
 |---------|-------------|
+| `GetMotorState` | Request a motor's position by joint name. Returns position (deg) and success/message. |
 | `WifiScan` | Request a WiFi network scan. Returns SSIDs with signal strengths. |
 | `WifiConnect` | Connect to a WiFi network with SSID + password. Returns success/message. |
 
