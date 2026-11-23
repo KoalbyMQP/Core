@@ -1,0 +1,11 @@
+{
+  "name": "joint_mover_demo",
+  "image": "ghcr.io/koalbymqp/joint-mover-demo",
+  "essential": false,
+  "autostart": false,
+  "depends": ["crab-api"],
+  "env": {
+    "ROS_DOMAIN_ID": "42",
+    "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp"
+  }
+}
