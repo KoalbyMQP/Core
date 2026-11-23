@@ -3,6 +3,17 @@
 #       --platform linux/arm64 \
 #       -t joint-mover-demo:dev \
 #       -f pkgs/joint_mover_demo/Dockerfile .
+#
+# The UI stage runs on the build machine's own platform: its output is plain JS/CSS, so an
+# arm64 image needs no emulation for it.
+
+FROM --platform=$BUILDPLATFORM node:22-slim AS ui
+WORKDIR /ui
+COPY pkgs/joint_mover_demo/ui/package.json pkgs/joint_mover_demo/ui/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY pkgs/joint_mover_demo/ui/ ./
+RUN npm run build
+
 FROM ros:humble
 
 RUN apt-get update && \
@@ -24,6 +35,8 @@ RUN /bin/bash -c 'source /opt/ros/humble/setup.bash && \
     rm -rf build log'
 
 COPY pkgs/joint_mover_demo/zaraos.json /etc/zaraos/package.json
+# Cortex reads the app's UI from this directory: zara-ui.json + the federation build.
+COPY --from=ui /ui/dist /etc/zaraos/ui
 
 ENV ROS_DOMAIN_ID=42
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
