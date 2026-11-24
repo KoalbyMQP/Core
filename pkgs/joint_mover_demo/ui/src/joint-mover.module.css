@@ -1,0 +1,562 @@
+/*
+ * CSS Modules: every class gets a build-unique name, so these rules can't leak into the
+ * Driver Station, and the page doesn't depend on host classes (the host only generates
+ * Tailwind for its own sources). The host's reset strips heading styles and gives the
+ * page no padding, so the page sets its own.
+ *
+ * Colours follow the host's theme tokens (light and dark) when it defines them, and fall back
+ * to neutral values that derive from the inherited text colour otherwise.
+ */
+.page {
+  --jm-brand: var(--kumo-brand, #3864f0);
+  --jm-on-brand: #fff;
+  --jm-danger: var(--kumo-danger, #dc2626);
+  --jm-danger-tint: var(--kumo-danger-tint, color-mix(in srgb, #dc2626 12%, transparent));
+  --jm-success: var(--kumo-success, #16a34a);
+  --jm-line: var(--kumo-line, color-mix(in srgb, currentColor 14%, transparent));
+  --jm-base: var(--kumo-base, transparent);
+  --jm-recessed: var(--kumo-recessed, color-mix(in srgb, currentColor 5%, transparent));
+  --jm-elevated: var(--kumo-elevated, color-mix(in srgb, currentColor 3%, transparent));
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.page *,
+.page *::before,
+.page *::after {
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .page {
+    padding: 32px;
+  }
+}
+
+.pageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.small {
+  margin: 0;
+  font-size: 13px;
+}
+
+.tiny {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.subtle {
+  margin: 0;
+  opacity: 0.68;
+  text-wrap: pretty;
+}
+
+.strong {
+  font-weight: 500;
+}
+
+.mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.wrap {
+  overflow-wrap: anywhere;
+}
+
+.success {
+  color: var(--jm-success);
+}
+
+/* Cards: a tinted header above a raised content area, like Kumo's LayerCard. */
+.card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--jm-line);
+  border-radius: 12px;
+  background: var(--jm-elevated);
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 16px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cardHeader .small {
+  opacity: 0.68;
+  text-wrap: pretty;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 0 4px 4px;
+  padding: 16px;
+  border: 1px solid var(--jm-line);
+  border-radius: 9px;
+  background: var(--jm-base);
+}
+
+.columns {
+  display: grid;
+  align-items: start;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 1px 8px;
+  border: 1px solid var(--jm-line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.badgeSuccess {
+  border-color: color-mix(in srgb, var(--jm-success) 35%, transparent);
+  color: var(--jm-success);
+}
+
+.badgeSuccess .badgeDot {
+  opacity: 1;
+}
+
+/* Banners */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--jm-brand) 30%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--jm-brand) 8%, transparent);
+}
+
+.bannerError {
+  border-color: color-mix(in srgb, var(--jm-danger) 35%, transparent);
+  background: var(--jm-danger-tint);
+}
+
+.bannerIcon {
+  flex: none;
+  margin-top: 2px;
+  font-size: 16px;
+  color: var(--jm-brand);
+}
+
+.bannerError .bannerIcon {
+  color: var(--jm-danger);
+}
+
+.bannerTitle {
+  font-weight: 500;
+}
+
+/* Buttons */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--jm-line);
+  border-radius: 8px;
+  background: var(--jm-base);
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.button:focus-visible,
+.toggle:focus-visible,
+.input:focus-visible,
+.slider:focus-visible {
+  outline: 2px solid var(--jm-brand);
+  outline-offset: 2px;
+}
+
+.buttonPrimary {
+  border-color: var(--jm-brand);
+  background: var(--jm-brand);
+  color: var(--jm-on-brand);
+}
+
+.buttonDestructive {
+  border-color: var(--jm-danger);
+  background: var(--jm-danger);
+  color: #fff;
+}
+
+.button:not(:disabled):hover {
+  filter: brightness(0.94);
+}
+
+.buttonLarge {
+  height: 44px;
+  padding: 0 18px;
+  font-size: 15px;
+}
+
+.buttonIcon {
+  font-size: 1.15em;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Fields */
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fieldDisabled .label,
+.fieldDisabled .control {
+  opacity: 0.6;
+}
+
+.label {
+  font-weight: 500;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  border: 1px solid var(--jm-line);
+  border-radius: 8px;
+  background: var(--jm-base);
+  overflow: hidden;
+}
+
+.control:focus-within {
+  border-color: var(--jm-brand);
+}
+
+.controlInvalid {
+  border-color: var(--jm-danger);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.unit {
+  padding: 0 10px;
+  opacity: 0.6;
+}
+
+.fieldError {
+  color: var(--jm-danger);
+}
+
+.slider {
+  width: 100%;
+  accent-color: var(--jm-brand);
+}
+
+/* Toggle groups */
+.toggleGroup {
+  display: flex;
+  width: 100%;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--jm-line);
+  border-radius: 9px;
+  background: var(--jm-recessed);
+}
+
+.toggle {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 8px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.toggle[aria-pressed="true"] {
+  border-color: var(--jm-line);
+  background: var(--jm-base);
+  font-weight: 500;
+}
+
+.toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.toggleCheck {
+  opacity: 0;
+}
+
+.toggleCheckOn {
+  opacity: 1;
+}
+
+/* Manual move */
+.manualForm {
+  display: grid;
+  align-items: start;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .manualForm {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 12rem) auto;
+  }
+
+  .manualSubmit {
+    margin-top: 27px;
+  }
+}
+
+.manualSubmit {
+  height: 40px;
+}
+
+/* Controller and output */
+.controller {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.controllerIcon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--jm-recessed);
+  font-size: 20px;
+}
+
+.keys {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.keys dd {
+  margin: 0;
+}
+
+.kbd {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--jm-recessed);
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.armRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.armRow .stack {
+  flex: 1 1 240px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.stats dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Motors */
+.preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-around;
+  gap: 16px;
+  padding: 20px 16px;
+  border-radius: 8px;
+  background: var(--jm-recessed);
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.figureCaption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.target {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dial {
+  width: 112px;
+  height: 112px;
+}
+
+.dialFace {
+  fill: var(--kumo-base, Canvas);
+  stroke: var(--jm-line);
+}
+
+.dialDeadzone {
+  fill: var(--jm-recessed);
+  stroke: var(--jm-line);
+}
+
+.dialTrack {
+  stroke: color-mix(in srgb, var(--jm-brand) 40%, transparent);
+}
+
+.dialRange {
+  fill: none;
+  stroke: color-mix(in srgb, var(--jm-brand) 30%, transparent);
+}
+
+.dialNeedle {
+  fill: none;
+  stroke: var(--jm-brand);
+}
+
+.dialKnob {
+  fill: var(--jm-brand);
+  stroke: var(--kumo-base, Canvas);
+}
+
+.settings {
+  display: grid;
+  align-items: start;
+  gap: 20px;
+}
+
+@media (min-width: 640px) {
+  .settings {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .span2 {
+    grid-column: span 2;
+  }
+}

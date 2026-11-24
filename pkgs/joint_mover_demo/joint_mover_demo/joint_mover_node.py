@@ -19,7 +19,7 @@ class JointMoverNode(Node):
         msg = MotorMove(
             joint_name=joint_name,
             position=float(position),
-            time=2.5,
+            time=0.5,
         )
         self.move_pub.publish(msg)
         return {"joint": joint_name, "target": position}

@@ -1,0 +1,4 @@
+node_modules/
+dist/
+# The root .gitignore ignores lockfiles; the image build needs this one (npm ci).
+!package-lock.json

@@ -1,16 +1,19 @@
 """ROS interface to the Urchin motor controller via the Crab API 2."""
 
+import logging
 import os
 
 import rclpy
 from ament_index_python.packages import get_package_share_directory
 from crab_api2 import Crab, NoFreeTicketError, TicketType
 from crab_api2.herkulex import JogLedColor, get_angle, move_one
+from crab_api2.log import setup_logging
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from zaraos_interfaces.msg import MotorMove
 from zaraos_interfaces.srv import GetMotorState
+
 
 # HerkuleX.MoveOne takes its play time in firmware ticks rather than
 # milliseconds, and rejects anything over 500 ms.
@@ -25,12 +28,14 @@ class Crab2Node(Node):
 
     def __init__(self):
         super().__init__("crab")
+        setup_logging(getattr(logging, os.environ.get("CRAB_LOG_LEVEL", "INFO").upper()))
 
         default_bridge = os.path.join(
             get_package_share_directory("crab_api"), "bridge.toml"
         )
         bridge_file = self.declare_parameter("bridge_file", default_bridge).value
         self.angle_timeout = self.declare_parameter("angle_timeout", 0.5).value
+
 
         self.get_logger().info(f"Loading bridge file {bridge_file}")
         self.crab = Crab(bridge_file)
@@ -52,6 +57,7 @@ class Crab2Node(Node):
             self.state_callback,
             callback_group=MutuallyExclusiveCallbackGroup(),
         )
+
 
     def move_callback(self, msg: MotorMove) -> None:
         """Send a MoveOne command for the requested joint."""
@@ -79,7 +85,7 @@ class Crab2Node(Node):
             return
 
         try:
-            ticket = self.crab.send(TicketType.INTERRUPT, [command])
+            ticket = self.crab.send(TicketType.ASYNCHRONOUS, [command])
             self.get_logger().info(f"MoveOne sent as ticket #{ticket}")
         except NoFreeTicketError:
             self.get_logger().error("Urchin has no free ticket for move")
@@ -89,7 +95,7 @@ class Crab2Node(Node):
         command = get_angle(joint)
 
         try:
-            ticket = self.crab.send(TicketType.INTERRUPT, [command])
+            ticket = self.crab.send(TicketType.ASYNCHRONOUS, [command])
             self.get_logger().info(f"GetAngle sent as ticket #{ticket}")
         except NoFreeTicketError:
             self.get_logger().error("Urchin has no free ticket for move")
